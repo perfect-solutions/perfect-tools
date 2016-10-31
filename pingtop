@@ -1,0 +1,56 @@
+#!/bin/bash
+
+usage()
+{
+    echo "Exit 2 with error: $1"
+    echo ""
+    echo "  pingtop filename"
+    echo "  pingtop ip1 ip2 ip3 ip4 ip5"
+    echo ""
+    echo "    filename	- path to file with one ip per line"
+    echo "    ip1,ip2,ipN	- ip list, one ip per argument"
+    echo ""
+    exit 2;
+}
+
+checkip()
+{
+    echo $1 | egrep -q -E '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$' || usage "bad ip format in $1";
+    echo $1 | tr "." "\n" | while read byte; do echo $byte | awk '{if ($1>255) print "FAIL"}'; done | grep -q FAIL && usage "bad ip value in $1"
+}
+
+if [ "$1" == "" ]; then
+    usage "First arg missed";
+fi
+
+if [ ! -f $1 ]; then
+    checkip $1;
+fi;
+
+if [ -f $1 ]; then
+    fname=$1
+else
+    fname=`mktemp pingtop.list.XXXXXXXX`
+    echo -n "" > $fname
+    for oneIP in "$@"; do
+	if [ "$oneIP" != "" ]; then
+	    checkip $oneIP;
+	    echo $oneIP >> $fname;
+	fi
+    done
+fi;
+
+log=`mktemp pingtop.run.XXXXXXXX`
+log1=`mktemp pingtop.run.XXXXXXXX`
+
+while true; do
+    cat $fname | awk '{print $1"--	--> "}' > $log
+    for i in `seq 0 50`; do
+        echo -n "" > $log1
+        cat $fname | while read ip; do ping -W 1 -c 1 $ip | grep  -q '1 received' && (echo -n "`cat $log | grep $ip--`" >> $log1; echo "." >> $log1) || (echo -n "`cat $log | grep $ip--`" >> $log1; echo "!" >> $log1);  done
+        mv $log1 $log
+        clear
+	date
+        cat $log
+    done;
+done

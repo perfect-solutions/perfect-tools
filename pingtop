@@ -44,10 +44,10 @@ log=`mktemp pingtop.run.XXXXXXXX`
 log1=`mktemp pingtop.run.XXXXXXXX`
 
 while true; do
-    cat $fname | awk '{print $1"--	--> "}' > $log
+    cat $fname | awk '{print $1" 	--> "}' > $log
     for i in `seq 0 50`; do
         echo -n "" > $log1
-        cat $fname | while read ip; do ping -W 1 -c 1 $ip | grep  -q '1 received' && (echo -n "`cat $log | grep $ip--`" >> $log1; echo "." >> $log1) || (echo -n "`cat $log | grep $ip--`" >> $log1; echo "!" >> $log1);  done
+        cat $fname | while read ip; do ping -W 1 -c 1 $ip | grep  -q '1 received' && (echo -n "`cat $log | grep \"$ip \"`" >> $log1; echo "." >> $log1) || (echo -n "`cat $log | grep \"$ip \"`" >> $log1; echo "!" >> $log1);  done
         mv $log1 $log
         clear
 	date

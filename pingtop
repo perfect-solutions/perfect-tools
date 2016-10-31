@@ -29,8 +29,10 @@ fi;
 
 if [ -f $1 ]; then
     fname=$1
+    tmpname=`mktemp /tmp/pingtop.empty.XXXXXX`
 else
-    fname=`mktemp pingtop.list.XXXXXXXX`
+    fname=`mktemp /tmp/pingtop.list.XXXXXXXX`
+    tmpname=$fname
     echo -n "" > $fname
     for oneIP in "$@"; do
 	if [ "$oneIP" != "" ]; then
@@ -40,8 +42,16 @@ else
     done
 fi;
 
-log=`mktemp pingtop.run.XXXXXXXX`
-log1=`mktemp pingtop.run.XXXXXXXX`
+log=`mktemp /tmp/pingtop.run.XXXXXXXX`
+log1=`mktemp /tmp/pingtop.run.XXXXXXXX`
+
+
+trap ctrl_c INT
+
+function ctrl_c() {
+    rm $log $log1 $tmpname
+    exit 0
+}
 
 while true; do
     cat $fname | awk '{print $1" 	--> "}' > $log

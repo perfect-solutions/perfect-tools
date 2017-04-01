@@ -62,5 +62,6 @@ while true; do
         clear
 	date
         cat $log
+	sleep 0.3
     done;
 done
